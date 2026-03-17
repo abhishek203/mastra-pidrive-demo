@@ -1,34 +1,46 @@
 # mastra-pidrive-demo
 
-A minimal demo showing how to use a **pidrive-mounted folder** as a **Mastra workspace** today.
+A minimal demo showing **Mastra + pidrive** as a persistent file handoff workflow.
+
+**Mastra has workspace and multi-agent building blocks; pidrive adds persistent file-based handoff.**
 
 This demo uses:
 - `pidrive mount` to expose storage as a local folder
 - Mastra `LocalFilesystem` for file tools
 - Mastra `LocalSandbox` for shell commands in the same workspace
+- two agents sharing one pidrive-backed workspace
 
-## What this proves
+## What this demo proves
 
-- A Mastra agent can read and write files in a pidrive-backed workspace
-- Files are real files on disk in the mounted pidrive folder
-- Files persist across app restarts
-- This can evolve into a native `PidriveFilesystem` later
+- two Mastra agents can collaborate through a shared workspace
+- the workspace is backed by a real pidrive-mounted folder
+- handoff artifacts are real files you can inspect directly
+- files persist across app restarts
+
+## Workspace layout
+
+Inside the pidrive-backed workspace, the demo uses:
+
+- `/private` — working notes, drafts, and intermediate files
+- `/handoff` — files intentionally prepared for another agent or downstream step
+- `/shared` — reserved for future/manual sharing flows
+
+`/handoff` is just a workflow convention in this demo: one agent writes a file there, another agent reads it.
 
 ## Why this matters
 
-Mastra workspaces are powerful, but many agents need storage that is:
-- persistent across runs
-- shareable across agents or users
-- easier to reason about than raw object storage
-
-This demo shows the simplest working path: **mount pidrive, then point Mastra at that path**.
+This demo is not trying to replace Mastra's existing workspace primitives.
+It shows a simple way to make agent artifacts:
+- durable
+- visible as real files
+- easy to inspect between steps
 
 ## Prerequisites
 
 1. Install pidrive
 2. Log in
 3. Mount your drive
-4. Have an OpenAI API key
+4. Have an Anthropic API key
 
 Example:
 
@@ -58,76 +70,60 @@ PIDRIVE_PATH=~/drive/my/mastra-demo
 
 ## Run
 
-```bash
-npm run ask -- "Write a short overview of Mastra workspaces and save it to /docs/workspace-overview.md"
-```
-
-Other useful prompts:
+### 1. Producer creates a handoff file
 
 ```bash
-npm run ask -- "List the files in the workspace and summarize what already exists"
-npm run ask -- "Read /docs/workspace-overview.md and save a shorter version to /artifacts/summary.md"
+npm run producer -- "Research Mastra workspaces. Save working notes to /private/research-notes.md and a polished memo to /handoff/workspace-brief.md"
 ```
 
-Inspect the mounted workspace:
+### 2. Inspect the real files in pidrive
 
 ```bash
 npm run check
+cat ~/drive/my/mastra-demo/handoff/workspace-brief.md
 ```
 
-Or directly:
+### 3. Consumer reads the handoff file and creates follow-up output
 
 ```bash
-ls ~/drive/my/mastra-demo/docs
-cat ~/drive/my/mastra-demo/docs/workspace-overview.md
+npm run consumer -- "Read the latest file in /handoff and create an executive summary at /private/consumer-summary.md"
 ```
 
-## Demo flow
-
-1. Run a prompt that saves a file into `/docs`
-2. Verify the file appears in the mounted pidrive folder
-3. Stop the app
-4. Run a second prompt asking what files already exist
-5. Verify the agent reads the previous file from the workspace
-
-This demonstrates persistence beyond one app run.
-
-## Suggested live demo prompts
-
-### 1. Write a file
+### 4. Inspect the consumer output
 
 ```bash
-npm run ask -- "Write a short overview of Mastra workspaces and save it to /docs/workspace-overview.md"
+cat ~/drive/my/mastra-demo/private/consumer-summary.md
 ```
 
-### 2. Show the real file exists
+## Suggested live demo flow
 
-```bash
-npm run check
-cat ~/drive/my/mastra-demo/docs/workspace-overview.md
-```
+1. Run the producer command
+2. Show the generated handoff file in the mounted pidrive folder
+3. Run the consumer command
+4. Show the consumer's follow-up file
+5. Re-run later to demonstrate persistence across runs
 
-### 3. Restart and read existing files
+## Shell command angle
 
-```bash
-npm run ask -- "What files already exist in the workspace? Read them and summarize them."
-```
+Because the workspace also uses `LocalSandbox`, the agents can inspect and operate on files in the same pidrive-backed workspace using shell commands when needed.
 
-### 4. Create a polished artifact
+## Why not just S3 mounts?
 
-```bash
-npm run ask -- "Read /docs/workspace-overview.md and save a shorter executive summary to /artifacts/summary.md"
-```
+Mastra already supports cloud filesystems and mounts.
+This demo is showing a workflow shape: a persistent file handoff layer for agent outputs.
+
+The point is not a new mount primitive.
+The point is that the resulting artifacts are durable, inspectable, and easy to pass between steps as real files.
 
 ## Notes
 
 - This demo **does require pidrive CLI + mount**.
-- That is acceptable for a proof-of-concept.
+- That is fine for a proof-of-concept.
 - A native Mastra integration could later remove the CLI requirement by implementing a direct `PidriveFilesystem` over WebDAV/API.
 
-## Proposed next step
+## Possible next step
 
-If this pattern is useful, the next step would be a package such as:
+If this pattern is useful, a future package could look like:
 
 - `@mastra/pidrive`
 

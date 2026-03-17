@@ -6,7 +6,8 @@
   "description": "Demo showing Mastra using a pidrive-mounted workspace via LocalFilesystem",
   "scripts": {
     "dev": "tsx src/index.ts",
-    "ask": "tsx src/index.ts",
+    "producer": "tsx src/producer.ts",
+    "consumer": "tsx src/consumer.ts",
     "check": "tsx src/check-workspace.ts"
   },
   "dependencies": {

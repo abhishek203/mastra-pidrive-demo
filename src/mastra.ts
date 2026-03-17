@@ -27,28 +27,44 @@ export const workspace = new Workspace({
     workingDirectory: workspacePath,
   }),
   bm25: true,
-  autoIndexPaths: ['/docs', '/artifacts'],
+  autoIndexPaths: ['/private', '/handoff', '/shared'],
 });
 
-export const workspaceAgent = new Agent({
-  id: 'pidrive-workspace-agent',
-  name: 'Pidrive Workspace Agent',
-  instructions: `You are a helpful assistant working inside a persistent pidrive-backed Mastra workspace.
+const model = anthropic(process.env.MODEL || 'claude-3-5-sonnet-latest');
+
+export const producerAgent = new Agent({
+  id: 'producer-agent',
+  name: 'Producer Agent',
+  instructions: `You are a producer agent working inside a persistent pidrive-backed Mastra workspace.
 
 Rules:
-- Save important outputs as files in the workspace.
-- Use /docs for notes, research, and working drafts.
-- Use /artifacts for polished outputs and final deliverables.
-- When asked what already exists, inspect the workspace using tools instead of guessing.
-- Prefer creating or updating files over only replying in chat.
-- Mention the exact file path you wrote or read in your final answer.`,
-  model: anthropic(process.env.MODEL || 'claude-3-5-sonnet-latest'),
+- Use /private for scratch notes, research, and intermediate drafts.
+- Use /handoff for files intentionally prepared for another agent or downstream step.
+- When asked to produce something, create both working notes in /private and a polished handoff artifact in /handoff when appropriate.
+- Inspect the workspace with tools before assuming files exist.
+- Mention the exact file paths you created or updated in your final answer.`,
+  model,
+  workspace,
+});
+
+export const consumerAgent = new Agent({
+  id: 'consumer-agent',
+  name: 'Consumer Agent',
+  instructions: `You are a consumer agent working inside a persistent pidrive-backed Mastra workspace.
+
+Rules:
+- Read incoming files from /handoff.
+- Create your own follow-up notes or summaries in /private unless the user asks for another handoff artifact.
+- Inspect the workspace with tools before deciding what to read.
+- Mention the exact file paths you read and wrote in your final answer.`,
+  model,
   workspace,
 });
 
 export const mastra = new Mastra({
   agents: {
-    workspaceAgent,
+    producerAgent,
+    consumerAgent,
   },
   workspace,
 });

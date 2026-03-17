@@ -25,6 +25,7 @@ async function main() {
     process.exit(1);
   }
 
+  console.log('Expected demo folders: private/, handoff/, shared/\n');
   await walk(workspacePath);
 }
 
