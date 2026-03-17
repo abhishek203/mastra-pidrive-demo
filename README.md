@@ -27,8 +27,7 @@ Pidrive gives agents the same, plus:
 | Revoke access | manual work | `pidrive revoke` |
 | Activity log | build it yourself | `pidrive activity` |
 
-Pidrive is not trying to replace Mastra's workspace primitives.
-It adds a **sharing and distribution layer** on top.
+Pidrive adds a **sharing and distribution layer** on top.
 
 ## What this demo shows
 
@@ -61,7 +60,7 @@ Edit `.env`:
 
 ```env
 ANTHROPIC_API_KEY=your_key_here
-MODEL=claude-3-5-sonnet-latest
+MODEL=your_model_here
 PIDRIVE_PATH=~/drive/my/mastra-demo
 ```
 
