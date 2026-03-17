@@ -1,56 +1,53 @@
 # mastra-pidrive-demo
 
-A minimal demo showing **Mastra + pidrive** as a persistent file handoff workflow.
+A demo showing **Mastra + pidrive** for agent workspaces with built-in sharing.
 
-**Mastra has workspace and multi-agent building blocks; pidrive adds persistent file-based handoff.**
+## How pidrive compares to Mastra workspaces
 
-This demo uses:
-- `pidrive mount` to expose storage as a local folder
-- Mastra `LocalFilesystem` for file tools
-- Mastra `LocalSandbox` for shell commands in the same workspace
-- two agents sharing one pidrive-backed workspace
+Mastra workspaces give agents:
+- file read/write tools
+- shell command execution
+- search and indexing
 
-## What this demo proves
+Pidrive gives agents the same, plus:
+- **public sharing** — `pidrive share --link` creates a URL anyone can access
+- **direct sharing** — `pidrive share --to agent@example.com` shares with a specific user or agent
+- **cross-machine access** — same files available from any machine via mount
+- **activity tracking** — see who accessed or modified files
 
-- two Mastra agents can collaborate through a shared workspace
-- the workspace is backed by a real pidrive-mounted folder
-- handoff artifacts are real files you can inspect directly
-- files persist across app restarts
+### In short
 
-## Workspace layout
+| Capability | Mastra + S3/Local | Mastra + Pidrive |
+|------------|-------------------|------------------|
+| Read/write files | ✓ | ✓ |
+| Shell commands | ✓ | ✓ |
+| Search/index | ✓ | ✓ |
+| Public share link | manual work | `pidrive share --link` |
+| Share with specific user | manual work | `pidrive share --to email` |
+| Revoke access | manual work | `pidrive revoke` |
+| Activity log | build it yourself | `pidrive activity` |
 
-Inside the pidrive-backed workspace, the demo uses:
+Pidrive is not trying to replace Mastra's workspace primitives.
+It adds a **sharing and distribution layer** on top.
 
-- `/private` — working notes, drafts, and intermediate files
-- `/handoff` — files intentionally prepared for another agent or downstream step
-- `/shared` — reserved for future/manual sharing flows
+## What this demo shows
 
-`/handoff` is just a workflow convention in this demo: one agent writes a file there, another agent reads it.
-
-## Why this matters
-
-This demo is not trying to replace Mastra's existing workspace primitives.
-It shows a simple way to make agent artifacts:
-- durable
-- visible as real files
-- easy to inspect between steps
+1. A Mastra agent creates a report in a pidrive-backed workspace
+2. The report is a real file you can inspect
+3. You can publish it instantly with `pidrive share --link`
+4. Anyone with the URL can view it — no auth, no setup
 
 ## Prerequisites
 
-1. Install pidrive
-2. Log in
-3. Mount your drive
-4. Have an Anthropic API key
-
-Example:
+1. Install pidrive CLI
+2. Log in and mount
 
 ```bash
 pidrive login --email you@example.com
 pidrive mount
 ```
 
-On macOS, pidrive typically mounts at `~/drive/`.
-On Linux, it is typically `/drive/`.
+3. Have an Anthropic API key
 
 ## Setup
 
@@ -68,66 +65,97 @@ MODEL=claude-3-5-sonnet-latest
 PIDRIVE_PATH=~/drive/my/mastra-demo
 ```
 
-## Run
+## Demo flow
 
-### 1. Producer creates a handoff file
+### 1. Agent creates a report
 
 ```bash
-npm run producer -- "Research Mastra workspaces. Save working notes to /private/research-notes.md and a polished memo to /handoff/workspace-brief.md"
+npm run producer -- "Research the benefits of AI agents for business automation. Save a polished report to /handoff/ai-agents-report.md"
 ```
 
-### 2. Inspect the real files in pidrive
+### 2. Inspect the file locally
 
 ```bash
 npm run check
-cat ~/drive/my/mastra-demo/handoff/workspace-brief.md
+cat ~/drive/my/mastra-demo/handoff/ai-agents-report.md
 ```
 
-### 3. Consumer reads the handoff file and creates follow-up output
+### 3. Publish it with a public link
 
 ```bash
-npm run consumer -- "Read the latest file in /handoff and create an executive summary at /private/consumer-summary.md"
+pidrive share ~/drive/my/mastra-demo/handoff/ai-agents-report.md --link
 ```
 
-### 4. Inspect the consumer output
+Output:
+```
+https://pidrive.ressl.ai/s/abc123
+```
+
+### 4. Open that URL in a browser
+
+Anyone with the link can now view the agent's output.
+
+## Other sharing options
+
+### Share with a specific user or agent
 
 ```bash
-cat ~/drive/my/mastra-demo/private/consumer-summary.md
+pidrive share ~/drive/my/mastra-demo/handoff/ai-agents-report.md --to other-agent@example.com
 ```
 
-## Suggested live demo flow
+The recipient sees it in their `/shared` folder after mounting.
 
-1. Run the producer command
-2. Show the generated handoff file in the mounted pidrive folder
-3. Run the consumer command
-4. Show the consumer's follow-up file
-5. Re-run later to demonstrate persistence across runs
+### Revoke access
 
-## Shell command angle
+```bash
+pidrive shared
+pidrive revoke <share-id>
+```
 
-Because the workspace also uses `LocalSandbox`, the agents can inspect and operate on files in the same pidrive-backed workspace using shell commands when needed.
+### See activity
 
-## Why not just S3 mounts?
+```bash
+pidrive activity
+```
 
-Mastra already supports cloud filesystems and mounts.
-This demo is showing a workflow shape: a persistent file handoff layer for agent outputs.
+## Why this matters
 
-The point is not a new mount primitive.
-The point is that the resulting artifacts are durable, inspectable, and easy to pass between steps as real files.
+Mastra agents can already write files to S3 or local storage.
+
+But if you want to:
+- publish an artifact publicly
+- share it with a specific person or agent
+- revoke access later
+- see who accessed it
+
+...you have to build all that yourself.
+
+Pidrive gives you those features out of the box.
+
+## Workspace layout
+
+The demo uses:
+
+- `/private` — working notes, drafts
+- `/handoff` — polished outputs ready to share
+- `/shared` — incoming files from others (read-only)
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run producer -- "..."` | Run the producer agent |
+| `npm run consumer -- "..."` | Run the consumer agent |
+| `npm run check` | List files in the workspace |
 
 ## Notes
 
-- This demo **does require pidrive CLI + mount**.
-- That is fine for a proof-of-concept.
-- A native Mastra integration could later remove the CLI requirement by implementing a direct `PidriveFilesystem` over WebDAV/API.
+- This demo requires pidrive CLI + mount
+- A native `PidriveFilesystem` for Mastra could remove the CLI requirement later
 
 ## Possible next step
 
-If this pattern is useful, a future package could look like:
-
-- `@mastra/pidrive`
-
-with a native provider:
+A future `@mastra/pidrive` package could expose:
 
 ```ts
 new Workspace({
@@ -135,9 +163,16 @@ new Workspace({
     serverUrl: 'https://pidrive.ressl.ai',
     email: process.env.PIDRIVE_EMAIL!,
     apiKey: process.env.PIDRIVE_API_KEY!,
-    root: '/my',
   }),
 })
 ```
 
-That would remove the local mount requirement and make pidrive a first-class Mastra workspace backend.
+And potentially:
+
+```ts
+// Agent-initiated sharing
+await workspace.share('/handoff/report.md', { link: true });
+await workspace.share('/handoff/report.md', { to: 'other@example.com' });
+```
+
+That would make sharing a first-class workspace operation inside Mastra.
