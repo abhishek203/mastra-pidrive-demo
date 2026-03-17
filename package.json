@@ -1,0 +1,21 @@
+{
+  "name": "mastra-pidrive-demo",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Demo showing Mastra using a pidrive-mounted workspace via LocalFilesystem",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "ask": "tsx src/index.ts",
+    "check": "tsx src/check-workspace.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.2.8",
+    "@mastra/core": "latest",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3"
+  }
+}
